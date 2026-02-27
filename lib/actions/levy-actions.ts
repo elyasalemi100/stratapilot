@@ -299,3 +299,164 @@ export async function sendLevyNotices(levyRunId: string) {
   revalidatePath("/");
   return results;
 }
+
+export async function updateOverdueInvoices(ocId: string) {
+  const supabase = await createClient();
+  const today = new Date().toISOString().split("T")[0];
+  await supabase
+    .from("invoices")
+    .update({ status: "overdue" })
+    .eq("oc_id", ocId)
+    .eq("status", "issued")
+    .lt("due_date", today)
+    .is("deleted_at", null);
+}
+
+export async function sendArrearsReminder(invoiceId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: inv } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      oc:oc(*),
+      lot:lots(*),
+      line_items:invoice_line_items(*)
+    `)
+    .eq("id", invoiceId)
+    .single();
+
+  if (!inv) throw new Error("Invoice not found");
+
+  const primaryOwner = await supabase
+    .from("lot_people")
+    .select("person_id")
+    .eq("lot_id", inv.lot_id)
+    .eq("is_primary_contact", true)
+    .limit(1)
+    .single();
+
+  let person: { full_name: string; email?: string } | null = null;
+  if (primaryOwner.data?.person_id) {
+    const r = await supabase
+      .from("people")
+      .select("full_name, email")
+      .eq("id", primaryOwner.data.person_id)
+      .single();
+    person = r.data as { full_name: string; email?: string } | null;
+  }
+  if (!person?.email) throw new Error("No email for owner");
+
+  const oc = inv.oc as { name: string; plan_number: string; address?: string };
+  const lineItems = (inv.line_items ?? []).map((li: { description: string; amount: number }) => ({
+    description: li.description,
+    amount: Number(li.amount),
+  }));
+  if (lineItems.length === 0) {
+    lineItems.push({ description: "Levy", amount: Number(inv.total_amount) });
+  }
+
+  const pdfBuffer = await generateInvoicePdf({
+    ocName: oc.name,
+    ocPlanNumber: oc.plan_number,
+    ocAddress: oc.address,
+    invoiceNumber: inv.invoice_number,
+    dueDate: inv.due_date,
+    lotNumber: (inv.lot as { lot_number?: string })?.lot_number ?? "",
+    ownerName: person.full_name,
+    lineItems,
+    totalAmount: Number(inv.total_amount),
+  });
+
+  const { sendArrearsReminderEmail } = await import("@/lib/utils/email");
+  await sendArrearsReminderEmail({
+    to: person.email,
+    ownerName: person.full_name,
+    subject: `Reminder: Overdue Levy - ${inv.invoice_number}`,
+    html: `
+      <p>Dear ${person.full_name},</p>
+      <p>This is a reminder that your levy invoice ${inv.invoice_number} is overdue.</p>
+      <p><strong>Amount due:</strong> $${(Number(inv.total_amount) - Number(inv.amount_paid ?? 0)).toFixed(2)}</p>
+      <p>Please arrange payment as soon as possible.</p>
+    `,
+    pdfBuffer,
+    invoiceNumber: inv.invoice_number,
+  });
+
+  await supabase.from("email_outbox").insert({
+    oc_id: inv.oc_id,
+    recipient_email: person.email,
+    recipient_name: person.full_name,
+    subject: `Reminder: Overdue Levy - ${inv.invoice_number}`,
+    status: "sent",
+    invoice_id: inv.id,
+    sent_at: new Date().toISOString(),
+  });
+
+  revalidatePath("/");
+  return { success: true };
+}
+
+export async function downloadInvoicePdf(invoiceId: string): Promise<Buffer> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const { data: inv } = await supabase
+    .from("invoices")
+    .select(`
+      *,
+      oc:oc(*),
+      lot:lots(*),
+      line_items:invoice_line_items(*)
+    `)
+    .eq("id", invoiceId)
+    .single();
+
+  if (!inv) throw new Error("Invoice not found");
+
+  const primaryOwner = await supabase
+    .from("lot_people")
+    .select("person_id")
+    .eq("lot_id", inv.lot_id)
+    .eq("is_primary_contact", true)
+    .limit(1)
+    .single();
+
+  let ownerName = "Owner";
+  if (primaryOwner.data?.person_id) {
+    const r = await supabase
+      .from("people")
+      .select("full_name")
+      .eq("id", primaryOwner.data.person_id)
+      .single();
+    ownerName = (r.data as { full_name?: string })?.full_name ?? "Owner";
+  }
+
+  const oc = inv.oc as { name: string; plan_number: string; address?: string };
+  const lineItems = (inv.line_items ?? []).map((li: { description: string; amount: number }) => ({
+    description: li.description,
+    amount: Number(li.amount),
+  }));
+  if (lineItems.length === 0) {
+    lineItems.push({ description: "Levy", amount: Number(inv.total_amount) });
+  }
+
+  return generateInvoicePdf({
+    ocName: oc.name,
+    ocPlanNumber: oc.plan_number,
+    ocAddress: oc.address,
+    invoiceNumber: inv.invoice_number,
+    dueDate: inv.due_date,
+    lotNumber: (inv.lot as { lot_number?: string })?.lot_number ?? "",
+    ownerName,
+    lineItems,
+    totalAmount: Number(inv.total_amount),
+  });
+}

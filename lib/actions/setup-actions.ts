@@ -31,6 +31,26 @@ export async function createOcFromWizard(data: {
     );
   }
 
+  // Enforce max_ocs limit
+  const { data: company } = await supabase
+    .from("management_companies")
+    .select("max_ocs")
+    .eq("id", profile.management_company_id)
+    .single();
+
+  if (company?.max_ocs != null && company.max_ocs >= 0) {
+    const { count } = await supabase
+      .from("oc")
+      .select("id", { count: "exact", head: true })
+      .eq("management_company_id", profile.management_company_id)
+      .is("deleted_at", null);
+    if ((count ?? 0) >= company.max_ocs) {
+      throw new Error(
+        `OC limit reached (${company.max_ocs}). Upgrade your plan to add more Owners Corporations.`
+      );
+    }
+  }
+
   const slug = data.plan_number.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
   const { data: oc, error } = await supabase

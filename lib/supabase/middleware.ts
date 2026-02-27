@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
   if (user && !isAccountSuspended && !isSignOut) {
     const { data: profile } = await supabase
       .from("users_profile")
-      .select("status")
+      .select("status, role, management_company_id")
       .eq("id", user.id)
       .single();
 
@@ -56,6 +56,45 @@ export async function updateSession(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/account-suspended";
       return NextResponse.redirect(url);
+    }
+
+    // Subscription gate: block dashboard access without valid subscription
+    const pathname = request.nextUrl.pathname;
+    const isBillingRequired = pathname === "/billing-required";
+    const isBillingPage = pathname.match(/^\/[^/]+\/settings\/billing$/);
+    const skipSubscriptionCheck =
+      isBillingRequired || isBillingPage || pathname === "/";
+
+    if (!skipSubscriptionCheck) {
+      // platform_super_admin bypasses
+      if (profile?.role === "platform_super_admin") {
+        return supabaseResponse;
+      }
+
+      if (profile?.management_company_id) {
+        const { data: company } = await supabase
+          .from("management_companies")
+          .select("is_enterprise, stripe_subscription_id, subscription_status")
+          .eq("id", profile.management_company_id)
+          .single();
+
+        const hasAccess =
+          company?.is_enterprise ||
+          (company?.stripe_subscription_id &&
+            company?.subscription_status !== "canceled" &&
+            company?.subscription_status !== "unpaid");
+
+        if (!hasAccess) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/billing-required";
+          return NextResponse.redirect(url);
+        }
+      } else {
+        // No management company - new users go to billing-required
+        const url = request.nextUrl.clone();
+        url.pathname = "/billing-required";
+        return NextResponse.redirect(url);
+      }
     }
   }
 

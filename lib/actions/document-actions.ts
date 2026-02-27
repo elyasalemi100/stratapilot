@@ -4,6 +4,52 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import crypto from "crypto";
+import { canAccessOc } from "@/lib/auth/permissions";
+
+export async function uploadDocument(
+  ocId: string,
+  formData: FormData,
+  folder: string = "general"
+) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const ok = await canAccessOc(ocId);
+  if (!ok) throw new Error("Access denied");
+
+  const file = formData.get("file") as File;
+  if (!file || !file.size) throw new Error("No file provided");
+
+  const ext = file.name.split(".").pop() ?? "";
+  const path = `${ocId}/${crypto.randomUUID()}_${file.name.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("documents")
+    .upload(path, file, {
+      contentType: file.type,
+      upsert: false,
+    });
+
+  if (uploadError) throw new Error(uploadError.message);
+
+  // Store storage path - serve API generates signed URLs
+  const { error: docError } = await supabase.from("documents").insert({
+    oc_id: ocId,
+    folder: folder as "financial" | "meetings" | "compliance" | "contracts" | "general",
+    file_name: file.name,
+    file_url: path,
+    file_size: file.size,
+    mime_type: file.type,
+    created_by: user.id,
+  });
+
+  if (docError) throw new Error(docError.message);
+  revalidatePath("/");
+  return { success: true };
+}
 
 export async function getDocuments(ocId: string, folder?: string) {
   const supabase = await createClient();

@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { notFound } from "next/navigation";
+import { ArrearsClient } from "./arrears-client";
+import { updateOverdueInvoices } from "@/lib/actions/levy-actions";
 
 export default async function ArrearsPage({
   params,
@@ -14,6 +15,8 @@ export default async function ArrearsPage({
   const { ocSlug } = await params;
   const oc = await getOcBySlug(ocSlug);
   if (!oc) notFound();
+
+  await updateOverdueInvoices(oc.id);
 
   const supabase = await createClient();
   const { data: invoices } = await supabase
@@ -73,11 +76,19 @@ export default async function ArrearsPage({
                         Due {formatDate(inv.due_date)}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end gap-2">
                       <p className="font-medium text-destructive">{formatCurrency(due)}</p>
-                      <Button variant="outline" size="sm" className="mt-2">
-                        Send reminder
-                      </Button>
+                      <div className="flex gap-2">
+                        <a
+                          href={`/api/invoices/${inv.id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Download PDF
+                        </a>
+                        <ArrearsClient invoiceId={inv.id} />
+                      </div>
                     </div>
                   </div>
                 );

@@ -56,6 +56,7 @@ export default async function InvoicesPage({
                     <th className="text-right py-2">Amount</th>
                     <th className="text-right py-2">Paid</th>
                     <th className="text-left py-2">Status</th>
+                    <th className="text-right py-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -78,6 +79,16 @@ export default async function InvoicesPage({
                         >
                           {inv.status}
                         </span>
+                      </td>
+                      <td className="py-2 text-right">
+                        <a
+                          href={`/api/invoices/${inv.id}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          PDF
+                        </a>
                       </td>
                     </tr>
                   ))}

@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDateTime } from "@/lib/utils";
 import { FileStack, FolderOpen } from "lucide-react";
 import { notFound } from "next/navigation";
+import { DocumentUpload } from "./document-upload";
 
 const FOLDERS = [
   { value: "financial", label: "Financial" },
@@ -65,7 +66,8 @@ export default async function DocumentsPage({
             Documents ({documents.length})
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          <DocumentUpload ocId={oc.id} ocSlug={ocSlug} folder={folder || "general"} />
           {documents.length === 0 ? (
             <div className="py-12 text-center">
               <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -91,7 +93,7 @@ export default async function DocumentsPage({
                     </div>
                   </div>
                   <a
-                    href={doc.file_url}
+                    href={`/api/documents/serve?path=${encodeURIComponent(doc.file_url)}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm text-primary hover:underline"

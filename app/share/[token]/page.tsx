@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 
@@ -8,7 +8,8 @@ export default async function ShareDocumentPage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const supabase = await createClient();
+  // Use service role to bypass RLS - share links work for unauthenticated users
+  const supabase = createServiceClient();
 
   const { data: link } = await supabase
     .from("document_links")
@@ -40,5 +41,7 @@ export default async function ShareDocumentPage({
 
   if (!doc) notFound();
 
-  redirect(doc.file_url);
+  // Redirect to serve API with token for unauthenticated access
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  redirect(`${baseUrl}/api/documents/serve?token=${token}`);
 }

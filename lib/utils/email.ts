@@ -1,6 +1,10 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const key = process.env.RESEND_API_KEY;
+  if (!key) throw new Error("Missing RESEND_API_KEY");
+  return new Resend(key);
+}
 
 export async function sendLevyNoticeEmail({
   to,
@@ -17,7 +21,7 @@ export async function sendLevyNoticeEmail({
   pdfBuffer: Buffer;
   invoiceNumber: string;
 }) {
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL || "StrataPilot <noreply@stratapilot.com>",
     to,
     subject,
@@ -28,6 +32,37 @@ export async function sendLevyNoticeEmail({
         content: pdfBuffer,
       },
     ],
+  });
+
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function sendArrearsReminderEmail({
+  to,
+  ownerName,
+  subject,
+  html,
+  pdfBuffer,
+  invoiceNumber,
+}: {
+  to: string;
+  ownerName: string;
+  subject: string;
+  html: string;
+  pdfBuffer?: Buffer;
+  invoiceNumber: string;
+}) {
+  const attachments = pdfBuffer
+    ? [{ filename: `invoice-${invoiceNumber}.pdf`, content: pdfBuffer }]
+    : undefined;
+
+  const { data, error } = await getResend().emails.send({
+    from: process.env.RESEND_FROM_EMAIL || "StrataPilot <noreply@stratapilot.com>",
+    to,
+    subject,
+    html,
+    attachments,
   });
 
   if (error) throw new Error(error.message);
@@ -58,7 +93,7 @@ export async function sendMeetingNoticeEmail({
       ]
     : undefined;
 
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL || "StrataPilot <noreply@stratapilot.com>",
     to,
     subject,

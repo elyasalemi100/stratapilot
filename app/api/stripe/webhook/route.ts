@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe/client";
 import { createClient } from "@supabase/supabase-js";
+import { getPlanById } from "@/lib/stripe/config";
 
 export async function POST(request: NextRequest) {
   const stripe = getStripe();
@@ -34,20 +35,27 @@ export async function POST(request: NextRequest) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session & {
-          metadata?: { management_company_id?: string };
+          metadata?: { management_company_id?: string; plan_id?: string };
         };
         const customerId = session.customer as string;
         const subscriptionId = session.subscription as string;
         const companyId = session.metadata?.management_company_id;
+        const planId = session.metadata?.plan_id;
 
         if (companyId && customerId) {
+          const plan = planId ? getPlanById(planId) : null;
+          const updates: Record<string, unknown> = {
+            stripe_customer_id: customerId,
+            stripe_subscription_id: subscriptionId ?? undefined,
+            subscription_status: "active",
+            updated_at: new Date().toISOString(),
+          };
+          if (plan && plan.maxOcs >= 0) updates.max_ocs = plan.maxOcs;
+          if (plan && plan.maxUsers >= 0) updates.max_users = plan.maxUsers;
+
           await supabase
             .from("management_companies")
-            .update({
-              stripe_customer_id: customerId,
-              stripe_subscription_id: subscriptionId ?? undefined,
-              updated_at: new Date().toISOString(),
-            })
+            .update(updates)
             .eq("id", companyId);
         }
         break;
@@ -64,10 +72,17 @@ export async function POST(request: NextRequest) {
           const updates: Record<string, unknown> = {
             updated_at: new Date().toISOString(),
           };
-          if (event.type === "customer.subscription.deleted" || subscription.status === "canceled") {
+          if (
+            event.type === "customer.subscription.deleted" ||
+            subscription.status === "canceled" ||
+            subscription.status === "unpaid"
+          ) {
             updates.stripe_subscription_id = null;
+            updates.subscription_status = "canceled";
           } else {
             updates.stripe_subscription_id = subscription.id;
+            updates.subscription_status =
+              subscription.status === "past_due" ? "past_due" : "active";
           }
           await supabase
             .from("management_companies")

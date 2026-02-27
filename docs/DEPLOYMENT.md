@@ -52,7 +52,13 @@ Create `.env.local` (for local dev) and set in Vercel:
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon/public key | `eyJ...` |
 | `RESEND_API_KEY` | Resend API key for email | `re_...` |
 | `RESEND_FROM_EMAIL` | From address for emails | `StrataPilot <noreply@yourdomain.com>` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (webhooks, share links) | `eyJ...` |
+| `STRIPE_SECRET_KEY` | Stripe secret key | `sk_...` |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret | `whsec_...` |
+| `STRIPE_PRICE_*` | Stripe price IDs for plans | `price_...` |
 | `CRON_SECRET` | Secret for cron endpoints (optional) | Random string |
+
+**Storage:** Create a `documents` bucket in Supabase Dashboard (Storage) - private, 50MB limit. Allowed MIME types: pdf, jpeg, png, gif, webp, doc, docx, xls, xlsx.
 
 ---
 
