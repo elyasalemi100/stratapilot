@@ -4,9 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { navGroups } from "@/lib/nav-config";
-import { ChevronDown, Shield } from "lucide-react";
+import { ChevronDown, ChevronRight, Shield } from "lucide-react";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   ocSlug: string;
@@ -41,10 +40,13 @@ export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: S
   };
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
-      <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="flex items-center gap-2 font-semibold text-primary transition-opacity hover:opacity-90">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-sm">
+    <aside className="flex h-full w-64 flex-col bg-slate-900 text-slate-100">
+      <div className="flex h-14 items-center border-b border-slate-700/80 px-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-semibold text-white transition-opacity hover:opacity-90"
+        >
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/20 text-cyan-400 font-bold text-sm">
             S
           </span>
           StrataPilot
@@ -54,14 +56,14 @@ export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: S
         {navGroups.map((group) => {
           const isCollapsed = collapsedGroups.has(group.title);
           return (
-            <div key={group.title} className="mb-2">
+            <div key={group.title} className="mb-1">
               <button
                 onClick={() => toggleGroup(group.title)}
-                className="flex w-full items-center justify-between px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:bg-muted/50"
+                className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-slate-800/80 hover:text-white transition-colors"
               >
-                {group.title}
+                <span>{group.title}</span>
                 <ChevronDown
-                  className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-[-90deg]")}
+                  className={cn("h-4 w-4 text-slate-500 transition-transform", isCollapsed && "rotate-[-90deg]")}
                 />
               </button>
               {!isCollapsed && (
@@ -75,19 +77,20 @@ export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: S
                         key={item.href}
                         href={href}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm transition-all rounded-r-lg mx-2",
+                          "flex items-center gap-3 px-4 py-2.5 text-sm transition-all relative",
                           isActive
-                            ? "border-l-2 border-primary bg-primary/10 font-medium text-primary"
-                            : "border-l-2 border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                            ? "bg-slate-800/90 text-white border-r-2 border-cyan-400"
+                            : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
                         )}
                       >
-                        <item.icon className="h-4 w-4 shrink-0" />
+                        <item.icon className={cn("h-4 w-4 shrink-0", isActive ? "text-cyan-400" : "text-slate-500")} />
                         <span className="flex-1 truncate">{item.title}</span>
                         {badgeVal != null && badgeVal > 0 && (
-                          <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                          <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-xs font-medium text-red-400">
                             {badgeVal}
                           </span>
                         )}
+                        <ChevronRight className={cn("h-4 w-4 shrink-0", isActive ? "text-cyan-400" : "text-slate-500")} />
                       </Link>
                     );
                   })}
@@ -98,10 +101,10 @@ export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: S
         })}
       </div>
       {isSuperAdmin && (
-        <div className="border-t p-4">
+        <div className="border-t border-slate-700/80 p-4">
           <Link
             href="/admin"
-            className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            className="flex items-center gap-2 text-sm font-medium text-cyan-400 hover:text-cyan-300 hover:underline"
           >
             <Shield className="h-4 w-4" />
             Platform Admin

@@ -9,9 +9,11 @@ export default async function OcLayout({
   params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ ocSlug: string }>;
+  params: Promise<{ ocSlug: string }> | { ocSlug: string };
 }) {
-  const { ocSlug } = await params;
+  const { ocSlug } = typeof (params as Promise<{ ocSlug: string }>).then === "function"
+    ? await (params as Promise<{ ocSlug: string }>)
+    : (params as { ocSlug: string });
   const [oc, ocs, superAdmin] = await Promise.all([
     getOcBySlug(ocSlug),
     getOcsForUser(),
