@@ -2,17 +2,17 @@
 -- Row Level Security for all tables
 
 -- =============================================================================
--- HELPER FUNCTIONS
+-- HELPER FUNCTIONS (public schema - auth schema is restricted in Supabase)
 -- =============================================================================
 
 -- Get current user's profile (cached in request)
-CREATE OR REPLACE FUNCTION auth.user_profile()
+CREATE OR REPLACE FUNCTION public.user_profile()
 RETURNS users_profile AS $$
   SELECT * FROM users_profile WHERE id = auth.uid() AND deleted_at IS NULL LIMIT 1;
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Check if user is platform super admin
-CREATE OR REPLACE FUNCTION auth.is_super_admin()
+CREATE OR REPLACE FUNCTION public.is_super_admin()
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users_profile 
@@ -21,9 +21,9 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Check if user has access to OC (via assignment or management_admin)
-CREATE OR REPLACE FUNCTION auth.user_has_oc_access(p_oc_id UUID)
+CREATE OR REPLACE FUNCTION public.user_has_oc_access(p_oc_id UUID)
 RETURNS BOOLEAN AS $$
-  SELECT auth.is_super_admin()
+  SELECT public.is_super_admin()
   OR EXISTS (
     SELECT 1 FROM users_profile up
     JOIN oc o ON o.management_company_id = up.management_company_id
@@ -38,7 +38,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Check if user is lot owner for a given lot
-CREATE OR REPLACE FUNCTION auth.user_is_lot_owner(p_lot_id UUID)
+CREATE OR REPLACE FUNCTION public.user_is_lot_owner(p_lot_id UUID)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users_profile up
@@ -49,7 +49,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Check if user is committee member for OC
-CREATE OR REPLACE FUNCTION auth.user_is_committee_member(p_oc_id UUID)
+CREATE OR REPLACE FUNCTION public.user_is_committee_member(p_oc_id UUID)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
     SELECT 1 FROM users_profile up
@@ -62,7 +62,7 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql STABLE SECURITY DEFINER;
 
 -- Get OC id from various entity types
-CREATE OR REPLACE FUNCTION auth.get_oc_id_from_entity(p_entity_type TEXT, p_entity_id UUID)
+CREATE OR REPLACE FUNCTION public.get_oc_id_from_entity(p_entity_type TEXT, p_entity_id UUID)
 RETURNS UUID AS $$
 BEGIN
   CASE p_entity_type
@@ -123,7 +123,7 @@ ALTER TABLE invoice_sequences ENABLE ROW LEVEL SECURITY;
 -- =============================================================================
 
 CREATE POLICY "Super admin full access" ON management_companies
-  FOR ALL USING (auth.is_super_admin());
+  FOR ALL USING (public.is_super_admin());
 
 CREATE POLICY "Users see own company" ON management_companies
   FOR SELECT USING (
@@ -146,7 +146,7 @@ CREATE POLICY "Users update own profile" ON users_profile
   FOR UPDATE USING (id = auth.uid());
 
 CREATE POLICY "Super admin full access" ON users_profile
-  FOR ALL USING (auth.is_super_admin());
+  FOR ALL USING (public.is_super_admin());
 
 CREATE POLICY "Management admin sees company users" ON users_profile
   FOR SELECT USING (
@@ -159,21 +159,21 @@ CREATE POLICY "Management admin sees company users" ON users_profile
 
 CREATE POLICY "OC select by access" ON oc
   FOR SELECT USING (
-    auth.is_super_admin() OR auth.user_has_oc_access(id)
+    public.is_super_admin() OR public.user_has_oc_access(id)
   );
 
 CREATE POLICY "OC insert by management" ON oc
   FOR INSERT WITH CHECK (
-    auth.is_super_admin() OR (
+    public.is_super_admin() OR (
       management_company_id IN (SELECT management_company_id FROM users_profile WHERE id = auth.uid() AND role IN ('management_admin', 'strata_manager') AND deleted_at IS NULL)
     )
   );
 
 CREATE POLICY "OC update by access" ON oc
-  FOR UPDATE USING (auth.user_has_oc_access(id));
+  FOR UPDATE USING (public.user_has_oc_access(id));
 
 CREATE POLICY "OC delete by super admin" ON oc
-  FOR DELETE USING (auth.is_super_admin());
+  FOR DELETE USING (public.is_super_admin());
 
 -- =============================================================================
 -- USER OC ASSIGNMENTS
@@ -181,7 +181,7 @@ CREATE POLICY "OC delete by super admin" ON oc
 
 CREATE POLICY "User OC assignments by access" ON user_oc_assignments
   FOR ALL USING (
-    auth.is_super_admin() OR auth.user_has_oc_access(oc_id) OR user_id = auth.uid()
+    public.is_super_admin() OR public.user_has_oc_access(oc_id) OR user_id = auth.uid()
   );
 
 -- =============================================================================
@@ -189,7 +189,7 @@ CREATE POLICY "User OC assignments by access" ON user_oc_assignments
 -- =============================================================================
 
 CREATE POLICY "OC subdivisions by OC access" ON oc_subdivisions
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 -- =============================================================================
 -- LOTS
@@ -197,17 +197,17 @@ CREATE POLICY "OC subdivisions by OC access" ON oc_subdivisions
 
 CREATE POLICY "Lots by OC access or owner" ON lots
   FOR SELECT USING (
-    auth.user_has_oc_access(oc_id) OR auth.user_is_lot_owner(id)
+    public.user_has_oc_access(oc_id) OR public.user_is_lot_owner(id)
   );
 
 CREATE POLICY "Lots insert/update by OC access" ON lots
-  FOR INSERT WITH CHECK (auth.user_has_oc_access(oc_id));
+  FOR INSERT WITH CHECK (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Lots update by OC access" ON lots
-  FOR UPDATE USING (auth.user_has_oc_access(oc_id));
+  FOR UPDATE USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Lots delete by OC access" ON lots
-  FOR DELETE USING (auth.user_has_oc_access(oc_id));
+  FOR DELETE USING (public.user_has_oc_access(oc_id));
 
 -- =============================================================================
 -- PEOPLE
@@ -215,12 +215,12 @@ CREATE POLICY "Lots delete by OC access" ON lots
 
 CREATE POLICY "People by OC access or own lot" ON people
   FOR SELECT USING (
-    auth.user_has_oc_access(oc_id) OR
-    id IN (SELECT lp.person_id FROM lot_people lp JOIN lots l ON l.id = lp.lot_id WHERE auth.user_is_lot_owner(l.id))
+    public.user_has_oc_access(oc_id) OR
+    id IN (SELECT lp.person_id FROM lot_people lp JOIN lots l ON l.id = lp.lot_id WHERE public.user_is_lot_owner(l.id))
   );
 
 CREATE POLICY "People insert/update by OC access" ON people
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 -- =============================================================================
 -- LOT PEOPLE
@@ -228,8 +228,8 @@ CREATE POLICY "People insert/update by OC access" ON people
 
 CREATE POLICY "Lot people by lot access" ON lot_people
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM lots WHERE id = lot_id)) OR
-    auth.user_is_lot_owner(lot_id)
+    public.user_has_oc_access((SELECT oc_id FROM lots WHERE id = lot_id)) OR
+    public.user_is_lot_owner(lot_id)
   );
 
 -- =============================================================================
@@ -237,12 +237,12 @@ CREATE POLICY "Lot people by lot access" ON lot_people
 -- =============================================================================
 
 CREATE POLICY "Committee terms by OC access" ON committee_terms
-  FOR ALL USING (auth.user_has_oc_access(oc_id) OR auth.user_is_committee_member(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id) OR public.user_is_committee_member(oc_id));
 
 CREATE POLICY "Committee members by OC access" ON committee_members
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM committee_terms WHERE id = committee_term_id)) OR
-    auth.user_is_committee_member((SELECT oc_id FROM committee_terms WHERE id = committee_term_id))
+    public.user_has_oc_access((SELECT oc_id FROM committee_terms WHERE id = committee_term_id)) OR
+    public.user_is_committee_member((SELECT oc_id FROM committee_terms WHERE id = committee_term_id))
   );
 
 -- =============================================================================
@@ -250,22 +250,22 @@ CREATE POLICY "Committee members by OC access" ON committee_members
 -- =============================================================================
 
 CREATE POLICY "Funds by OC access" ON funds
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Bank accounts by OC access" ON bank_accounts
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Chart accounts by OC access" ON chart_accounts
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Bank transactions by account access" ON bank_transactions
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM bank_accounts WHERE id = bank_account_id))
+    public.user_has_oc_access((SELECT oc_id FROM bank_accounts WHERE id = bank_account_id))
   );
 
 CREATE POLICY "Transaction allocations by transaction access" ON transaction_allocations
   FOR ALL USING (
-    auth.user_has_oc_access((
+    public.user_has_oc_access((
       SELECT ba.oc_id FROM bank_transactions bt
       JOIN bank_accounts ba ON ba.id = bt.bank_account_id
       WHERE bt.id = bank_transaction_id
@@ -273,33 +273,33 @@ CREATE POLICY "Transaction allocations by transaction access" ON transaction_all
   );
 
 CREATE POLICY "Levy runs by OC access" ON levy_runs
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Levy rules by OC access" ON levy_rules
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Invoices by OC access or owner" ON invoices
   FOR SELECT USING (
-    auth.user_has_oc_access(oc_id) OR auth.user_is_lot_owner(lot_id)
+    public.user_has_oc_access(oc_id) OR public.user_is_lot_owner(lot_id)
   );
 
 CREATE POLICY "Invoices insert/update by OC access" ON invoices
-  FOR INSERT WITH CHECK (auth.user_has_oc_access(oc_id));
+  FOR INSERT WITH CHECK (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Invoices update by OC access" ON invoices
-  FOR UPDATE USING (auth.user_has_oc_access(oc_id));
+  FOR UPDATE USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Invoice line items by invoice access" ON invoice_line_items
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM invoices WHERE id = invoice_id))
+    public.user_has_oc_access((SELECT oc_id FROM invoices WHERE id = invoice_id))
   );
 
 CREATE POLICY "Payments by OC access" ON payments
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Invoice payments by invoice access" ON invoice_payments
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM invoices WHERE id = invoice_id))
+    public.user_has_oc_access((SELECT oc_id FROM invoices WHERE id = invoice_id))
   );
 
 -- =============================================================================
@@ -308,20 +308,20 @@ CREATE POLICY "Invoice payments by invoice access" ON invoice_payments
 
 CREATE POLICY "Meetings by OC access or committee" ON meetings
   FOR SELECT USING (
-    auth.user_has_oc_access(oc_id) OR auth.user_is_committee_member(oc_id)
+    public.user_has_oc_access(oc_id) OR public.user_is_committee_member(oc_id)
   );
 
 CREATE POLICY "Meetings insert/update by OC access" ON meetings
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Meeting agenda items by meeting access" ON meeting_agenda_items
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
+    public.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
   );
 
 CREATE POLICY "Meeting motions by agenda access" ON meeting_motions
   FOR ALL USING (
-    auth.user_has_oc_access((
+    public.user_has_oc_access((
       SELECT m.oc_id FROM meeting_agenda_items mai
       JOIN meetings m ON m.id = mai.meeting_id
       WHERE mai.id = agenda_item_id
@@ -330,22 +330,22 @@ CREATE POLICY "Meeting motions by agenda access" ON meeting_motions
 
 CREATE POLICY "Meeting attachments by meeting access" ON meeting_attachments
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
+    public.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
   );
 
 CREATE POLICY "Meeting minutes by meeting access" ON meeting_minutes
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
+    public.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
   );
 
 CREATE POLICY "Meeting attendance by meeting access" ON meeting_attendance
   FOR ALL USING (
-    auth.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
+    public.user_has_oc_access((SELECT oc_id FROM meetings WHERE id = meeting_id))
   );
 
 CREATE POLICY "Meeting votes by motion access" ON meeting_votes
   FOR ALL USING (
-    auth.user_has_oc_access((
+    public.user_has_oc_access((
       SELECT m.oc_id FROM meeting_motions mm
       JOIN meeting_agenda_items mai ON mai.id = mm.agenda_item_id
       JOIN meetings m ON m.id = mai.meeting_id
@@ -358,7 +358,7 @@ CREATE POLICY "Meeting votes by motion access" ON meeting_votes
 -- =============================================================================
 
 CREATE POLICY "Documents by OC access" ON documents
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
 
 -- Document links: no direct RLS - access via server action with token validation
 
@@ -367,10 +367,10 @@ CREATE POLICY "Documents by OC access" ON documents
 -- =============================================================================
 
 CREATE POLICY "Email templates by OC access" ON email_templates
-  FOR ALL USING (oc_id IS NULL OR auth.user_has_oc_access(oc_id));
+  FOR ALL USING (oc_id IS NULL OR public.user_has_oc_access(oc_id));
 
 CREATE POLICY "Email outbox by OC access" ON email_outbox
-  FOR ALL USING (oc_id IS NULL OR auth.user_has_oc_access(oc_id));
+  FOR ALL USING (oc_id IS NULL OR public.user_has_oc_access(oc_id));
 
 -- =============================================================================
 -- AUDIT LOG
@@ -378,7 +378,7 @@ CREATE POLICY "Email outbox by OC access" ON email_outbox
 
 CREATE POLICY "Audit log by OC access" ON audit_log
   FOR SELECT USING (
-    auth.is_super_admin() OR oc_id IS NULL OR auth.user_has_oc_access(oc_id)
+    public.is_super_admin() OR oc_id IS NULL OR public.user_has_oc_access(oc_id)
   );
 
 CREATE POLICY "Audit log insert by authenticated" ON audit_log
@@ -389,4 +389,4 @@ CREATE POLICY "Audit log insert by authenticated" ON audit_log
 -- =============================================================================
 
 CREATE POLICY "Invoice sequences by OC access" ON invoice_sequences
-  FOR ALL USING (auth.user_has_oc_access(oc_id));
+  FOR ALL USING (public.user_has_oc_access(oc_id));
