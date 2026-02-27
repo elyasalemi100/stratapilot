@@ -32,4 +32,10 @@ describe("navGroups", () => {
     const recon = banking?.items.find((i) => i.title === "Reconciliation");
     expect(recon?.badge).toBe("unreconciled");
   });
+
+  it("Settings has Billing item", () => {
+    const settings = navGroups.find((g) => g.title === "Settings");
+    const billing = settings?.items.find((i) => i.title === "Billing");
+    expect(billing?.href).toBe("settings/billing");
+  });
 });
