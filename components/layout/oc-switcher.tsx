@@ -50,7 +50,7 @@ export function OcSwitcher({ currentOc, ocs, className }: OcSwitcherProps) {
         <Button
           variant="outline"
           className={cn(
-            "min-w-[200px] justify-between font-normal",
+            "min-w-[200px] justify-between font-normal hover:bg-muted/50",
             className
           )}
         >

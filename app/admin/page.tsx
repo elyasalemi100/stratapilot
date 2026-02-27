@@ -19,9 +19,9 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
-      <div>
+      <div className="rounded-2xl border bg-gradient-to-br from-card to-muted/30 p-6">
         <h1 className="text-3xl font-bold">Platform Admin</h1>
-        <p className="text-muted-foreground">
+        <p className="mt-1 text-muted-foreground">
           Manage branches, users, billing, and platform settings
         </p>
       </div>
@@ -29,7 +29,7 @@ export default async function AdminPage() {
       {(signupsBlocked || whitelistEnabled) && (
         <Card className="border-amber-500/50 bg-amber-500/5">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-600">
+            <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-500">
               <AlertCircle className="h-5 w-5" />
               Signup Restrictions Active
             </CardTitle>
@@ -48,7 +48,7 @@ export default async function AdminPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Link href="/admin/branches">
-          <Card className="hover:border-primary/50 transition-colors">
+          <Card className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Branches</CardTitle>
               <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -60,7 +60,7 @@ export default async function AdminPage() {
           </Card>
         </Link>
         <Link href="/admin/users">
-          <Card className="hover:border-primary/50 transition-colors">
+          <Card className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -72,7 +72,7 @@ export default async function AdminPage() {
           </Card>
         </Link>
         <Link href="/admin/subdivisions">
-          <Card className="hover:border-primary/50 transition-colors">
+          <Card className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Subdivisions</CardTitle>
               <Home className="h-4 w-4 text-muted-foreground" />
@@ -84,7 +84,7 @@ export default async function AdminPage() {
           </Card>
         </Link>
         <Link href="/admin/billing">
-          <Card className="hover:border-primary/50 transition-colors">
+          <Card className="card-hover">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Billing</CardTitle>
               <CreditCard className="h-4 w-4 text-muted-foreground" />

@@ -57,9 +57,12 @@ export function SignupForm() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1 text-center">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-muted/30 to-primary/5 p-4">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1 text-center pb-2">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-2xl font-bold text-primary">
+            S
+          </div>
           <CardTitle className="text-2xl font-bold">StrataPilot</CardTitle>
           <CardDescription>Create your account</CardDescription>
         </CardHeader>
@@ -102,8 +105,8 @@ export function SignupForm() {
               />
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+          <CardFooter className="flex flex-col gap-4 pt-2">
+            <Button type="submit" className="w-full h-11" disabled={loading}>
               {loading ? "Creating account..." : "Sign up"}
             </Button>
             <p className="text-center text-sm text-muted-foreground">

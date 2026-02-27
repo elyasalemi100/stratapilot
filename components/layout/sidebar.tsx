@@ -41,9 +41,12 @@ export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: S
   };
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r bg-card">
+    <aside className="flex h-full w-64 flex-col border-r bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
       <div className="flex h-14 items-center border-b px-4">
-        <Link href="/" className="font-semibold text-primary">
+        <Link href="/" className="flex items-center gap-2 font-semibold text-primary transition-opacity hover:opacity-90">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-sm">
+            S
+          </span>
           StrataPilot
         </Link>
       </div>
@@ -72,9 +75,9 @@ export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: S
                         key={item.href}
                         href={href}
                         className={cn(
-                          "flex items-center gap-3 px-4 py-2.5 text-sm transition-colors",
+                          "flex items-center gap-3 px-4 py-2.5 text-sm transition-all rounded-r-lg mx-2",
                           isActive
-                            ? "border-l-2 border-primary bg-primary/5 font-medium text-primary"
+                            ? "border-l-2 border-primary bg-primary/10 font-medium text-primary"
                             : "border-l-2 border-transparent text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                         )}
                       >

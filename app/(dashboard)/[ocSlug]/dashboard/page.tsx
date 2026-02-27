@@ -1,6 +1,6 @@
 import { getOcBySlug } from "@/lib/actions/oc-actions";
 import { createClient } from "@/lib/supabase/server";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { AlertCircle, Receipt, ArrowLeftRight, Calendar } from "lucide-react";
 import Link from "next/link";
@@ -61,120 +61,132 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-8">
-      <div>
+      <div className="rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-card p-6">
         <h1 className="text-3xl font-bold tracking-tight">{oc.name}</h1>
-        <p className="text-muted-foreground">
+        <p className="mt-1 text-muted-foreground">
           {oc.plan_number} • {oc.address}
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Arrears</CardTitle>
-            <AlertCircle className="h-4 w-4 text-destructive" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(arrearsTotal)}</div>
-            <p className="text-xs text-muted-foreground">
-              {arrears.length} overdue invoice{arrears.length !== 1 ? "s" : ""}
-            </p>
-            <Link href={`/${ocSlug}/levies/arrears`}>
-              <Button variant="link" className="h-auto p-0 text-primary">
-                View arrears
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Unreconciled</CardTitle>
-            <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{unreconciledCount}</div>
-            <p className="text-xs text-muted-foreground">transactions</p>
-            <Link href={`/${ocSlug}/banking/reconciliation`}>
-              <Button variant="link" className="h-auto p-0 text-primary">
-                Reconcile
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Levies</CardTitle>
-            <Receipt className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {upcomingLevies.length > 0
-                ? formatCurrency(Number(upcomingLevies[0].total_amount))
-                : "—"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {upcomingLevies.length > 0
-                ? `Due ${formatDate(upcomingLevies[0].due_date)}`
-                : "No upcoming levies"}
-            </p>
-            <Link href={`/${ocSlug}/levies/runs`}>
-              <Button variant="link" className="h-auto p-0 text-primary">
-                View levy runs
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Meetings</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {upcomingMeetings.length > 0 ? upcomingMeetings[0].title : "—"}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {upcomingMeetings.length > 0
-                ? formatDate(upcomingMeetings[0].meeting_date)
-                : "No upcoming meetings"}
-            </p>
-            <Link href={`/${ocSlug}/meetings`}>
-              <Button variant="link" className="h-auto p-0 text-primary">
-                View meetings
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <Link href={`/${ocSlug}/levies/arrears`}>
+          <Card className="card-hover h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Arrears</CardTitle>
+              <div className="rounded-full bg-destructive/10 p-2">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatCurrency(arrearsTotal)}</div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {arrears.length} overdue invoice{arrears.length !== 1 ? "s" : ""}
+              </p>
+              <span className="mt-2 inline-block text-sm font-medium text-primary">
+                View arrears →
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href={`/${ocSlug}/banking/reconciliation`}>
+          <Card className="card-hover h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Unreconciled</CardTitle>
+              <div className="rounded-full bg-muted p-2">
+                <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{unreconciledCount}</div>
+              <p className="mt-1 text-xs text-muted-foreground">transactions</p>
+              <span className="mt-2 inline-block text-sm font-medium text-primary">
+                Reconcile →
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href={`/${ocSlug}/levies/runs`}>
+          <Card className="card-hover h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming Levies</CardTitle>
+              <div className="rounded-full bg-muted p-2">
+                <Receipt className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {upcomingLevies.length > 0
+                  ? formatCurrency(Number(upcomingLevies[0].total_amount))
+                  : "—"}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {upcomingLevies.length > 0
+                  ? `Due ${formatDate(upcomingLevies[0].due_date)}`
+                  : "No upcoming levies"}
+              </p>
+              <span className="mt-2 inline-block text-sm font-medium text-primary">
+                View levy runs →
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href={`/${ocSlug}/meetings`}>
+          <Card className="card-hover h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Upcoming Meetings</CardTitle>
+              <div className="rounded-full bg-muted p-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold truncate">
+                {upcomingMeetings.length > 0 ? upcomingMeetings[0].title : "—"}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {upcomingMeetings.length > 0
+                  ? formatDate(upcomingMeetings[0].meeting_date)
+                  : "No upcoming meetings"}
+              </p>
+              <span className="mt-2 inline-block text-sm font-medium text-primary">
+                View meetings →
+              </span>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
-            <CardContent className="p-0 pt-4">
-              <div className="flex flex-wrap gap-2">
-                <Link href={`/${ocSlug}/levies/runs/new`}>
-                  <Button>New levy run</Button>
-                </Link>
-                <Link href={`/${ocSlug}/banking/import`}>
-                  <Button variant="outline">Import bank CSV</Button>
-                </Link>
-                <Link href={`/${ocSlug}/meetings`}>
-                  <Button variant="outline">Schedule meeting</Button>
-                </Link>
-              </div>
-            </CardContent>
+            <CardDescription>Common tasks for this OC</CardDescription>
           </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              <Link href={`/${ocSlug}/levies/runs/new`}>
+                <Button className="shadow-sm">New levy run</Button>
+              </Link>
+              <Link href={`/${ocSlug}/banking/import`}>
+                <Button variant="outline">Import bank CSV</Button>
+              </Link>
+              <Link href={`/${ocSlug}/meetings/new`}>
+                <Button variant="outline">Schedule meeting</Button>
+              </Link>
+            </div>
+          </CardContent>
         </Card>
         <Card>
           <CardHeader>
             <CardTitle>Setup Status</CardTitle>
-            <CardContent className="p-0 pt-4">
-              <Link href={`/${ocSlug}/setup`}>
-                <Button variant="outline">Complete OC setup wizard</Button>
-              </Link>
-            </CardContent>
+            <CardDescription>Complete setup to unlock all features</CardDescription>
           </CardHeader>
+          <CardContent>
+            <Link href={`/${ocSlug}/setup`}>
+              <Button variant="outline" className="w-full sm:w-auto">
+                Complete OC setup wizard
+              </Button>
+            </Link>
+          </CardContent>
         </Card>
       </div>
     </div>

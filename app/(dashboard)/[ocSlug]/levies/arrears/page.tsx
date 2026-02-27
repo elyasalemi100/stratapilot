@@ -51,7 +51,11 @@ export default async function ArrearsPage({
         </CardHeader>
         <CardContent>
           {invoices?.length === 0 ? (
-            <p className="text-muted-foreground">No arrears</p>
+            <div className="rounded-lg border border-dashed border-muted-foreground/25 bg-muted/30 py-12 text-center">
+              <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground/50" />
+              <p className="mt-4 text-muted-foreground">No arrears</p>
+              <p className="mt-1 text-sm text-muted-foreground">All invoices are up to date.</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {invoices?.map((inv) => {
@@ -59,7 +63,7 @@ export default async function ArrearsPage({
                 return (
                   <div
                     key={inv.id}
-                    className="flex items-center justify-between rounded-lg border p-4"
+                    className="flex items-center justify-between rounded-lg border bg-card p-4 transition-colors hover:bg-muted/30"
                   >
                     <div>
                       <p className="font-medium">

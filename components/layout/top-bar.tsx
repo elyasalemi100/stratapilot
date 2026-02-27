@@ -15,7 +15,7 @@ export function TopBar({ currentOc, ocs }: TopBarProps) {
   const [commandOpen, setCommandOpen] = useState(false);
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-background px-4">
+    <header className="flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur px-4">
       <OcSwitcher currentOc={currentOc} ocs={ocs} />
       <Button
         variant="outline"

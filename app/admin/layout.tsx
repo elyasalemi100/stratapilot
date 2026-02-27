@@ -40,19 +40,21 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b bg-card">
+    <div className="min-h-screen bg-muted/20">
+      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur">
         <div className="flex h-14 items-center gap-6 px-6">
-          <Link href="/admin" className="flex items-center gap-2 font-semibold text-primary">
-            <Shield className="h-5 w-5" />
+          <Link href="/admin" className="flex items-center gap-2 font-semibold text-primary transition-opacity hover:opacity-90">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+              <Shield className="h-4 w-4 text-primary" />
+            </span>
             Platform Admin
           </Link>
-          <nav className="flex gap-4">
+          <nav className="flex gap-1">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground"
+                className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 {item.label}
               </Link>
