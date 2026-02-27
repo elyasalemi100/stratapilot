@@ -90,10 +90,6 @@ export default function LoginPage() {
               <Link href="/signup" className="text-primary hover:underline">
                 Sign up
               </Link>
-              {" · "}
-              <Link href="/pricing" className="text-primary hover:underline">
-                View pricing
-              </Link>
             </p>
           </CardFooter>
         </form>
