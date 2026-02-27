@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getOcBySlug, getOcsForUser, getDashboardBadges } from "@/lib/actions/oc-actions";
+import { isSuperAdmin } from "@/lib/auth/permissions";
 import { Sidebar } from "@/components/layout/sidebar";
 import { TopBar } from "@/components/layout/top-bar";
 
@@ -11,7 +12,11 @@ export default async function OcLayout({
   params: Promise<{ ocSlug: string }>;
 }) {
   const { ocSlug } = await params;
-  const [oc, ocs] = await Promise.all([getOcBySlug(ocSlug), getOcsForUser()]);
+  const [oc, ocs, superAdmin] = await Promise.all([
+    getOcBySlug(ocSlug),
+    getOcsForUser(),
+    isSuperAdmin(),
+  ]);
 
   if (!oc) notFound();
 
@@ -36,6 +41,7 @@ export default async function OcLayout({
       <Sidebar
         ocSlug={ocSlug}
         ocName={oc.name}
+        isSuperAdmin={superAdmin}
         badges={{
           arrearsCount: badges.arrearsCount,
           unreconciledCount: badges.unreconciledCount,

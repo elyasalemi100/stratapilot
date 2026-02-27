@@ -30,6 +30,8 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/signup");
+  const isAccountSuspended = request.nextUrl.pathname === "/account-suspended";
+  const isSignOut = request.nextUrl.pathname === "/auth/signout";
 
   if (!user && !isAuthPage && !request.nextUrl.pathname.startsWith("/auth")) {
     const url = request.nextUrl.clone();
@@ -41,6 +43,20 @@ export async function updateSession(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
+  }
+
+  if (user && !isAccountSuspended && !isSignOut) {
+    const { data: profile } = await supabase
+      .from("users_profile")
+      .select("status")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.status === "suspended" || profile?.status === "banned") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/account-suspended";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

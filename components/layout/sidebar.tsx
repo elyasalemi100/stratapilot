@@ -4,13 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { navGroups } from "@/lib/nav-config";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Shield } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   ocSlug: string;
   ocName: string;
+  isSuperAdmin?: boolean;
   badges?: {
     arrearsCount?: number;
     unreconciledCount?: number;
@@ -18,7 +19,7 @@ interface SidebarProps {
   };
 }
 
-export function Sidebar({ ocSlug, ocName, badges = {} }: SidebarProps) {
+export function Sidebar({ ocSlug, ocName, isSuperAdmin = false, badges = {} }: SidebarProps) {
   const pathname = usePathname();
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -93,6 +94,17 @@ export function Sidebar({ ocSlug, ocName, badges = {} }: SidebarProps) {
           );
         })}
       </div>
+      {isSuperAdmin && (
+        <div className="border-t p-4">
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+          >
+            <Shield className="h-4 w-4" />
+            Platform Admin
+          </Link>
+        </div>
+      )}
     </aside>
   );
 }
