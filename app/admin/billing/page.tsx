@@ -1,6 +1,8 @@
 import { getBranches } from "@/lib/actions/admin-actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CreditCard, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { PRICING_PLANS, formatPrice } from "@/lib/stripe/config";
 
 export default async function AdminBillingPage() {
   const branches = await getBranches();
@@ -14,6 +16,35 @@ export default async function AdminBillingPage() {
           View billing and subscription status. Integrate with Stripe Dashboard for full management.
         </p>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Pricing Plans</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-3">
+            {PRICING_PLANS.map((plan) => (
+              <div key={plan.id} className="rounded-lg border p-4">
+                <p className="font-semibold">{plan.name}</p>
+                {plan.id === "enterprise" ? (
+                  <p className="text-muted-foreground">Contact sales</p>
+                ) : (
+                  <p className="text-lg font-bold">
+                    {formatPrice(plan.priceMonthly)}/mo
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {plan.maxOcs === -1 ? "Unlimited" : plan.maxOcs} OCs •{" "}
+                  {plan.maxUsers === -1 ? "Unlimited" : plan.maxUsers} users
+                </p>
+              </div>
+            ))}
+          </div>
+          <Link href="/pricing" className="text-sm text-primary hover:underline mt-4 inline-block">
+            View public pricing page →
+          </Link>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

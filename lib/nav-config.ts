@@ -17,6 +17,7 @@ import {
   Shield,
   Settings,
   Wrench,
+  CreditCard,
 } from "lucide-react";
 
 export interface NavItem {
@@ -111,6 +112,7 @@ export const navGroups: NavGroup[] = [
     title: "Settings",
     items: [
       { title: "OC Settings", href: "settings", icon: Settings },
+      { title: "Billing", href: "settings/billing", icon: CreditCard },
       { title: "Financial Setup", href: "settings/financial", icon: Landmark },
       { title: "Users & Permissions", href: "settings/users", icon: Users },
     ],
