@@ -4,22 +4,11 @@ import { getOcsForUser } from "@/lib/actions/oc-actions";
 import Link from "next/link";
 
 export default async function HomePage() {
+  let user;
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      redirect("/login");
-    }
-
-    const ocs = await getOcsForUser();
-    if (ocs.length === 0) {
-      redirect("/portfolio");
-    }
-
-    redirect(`/${ocs[0].slug}/dashboard`);
+    const { data } = await supabase.auth.getUser();
+    user = data?.user;
   } catch {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-4">
@@ -33,4 +22,15 @@ export default async function HomePage() {
       </div>
     );
   }
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const ocs = await getOcsForUser();
+  if (ocs.length === 0) {
+    redirect("/portfolio");
+  }
+
+  redirect(`/${ocs[0].slug}/dashboard`);
 }

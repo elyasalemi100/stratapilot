@@ -17,13 +17,14 @@ export async function updateSession(request: NextRequest) {
     supabaseKey,
     {
       cookies: {
-        getAll() {
-          return request.cookies.getAll();
+        get(name: string) {
+          return request.cookies.get(name)?.value;
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            supabaseResponse.cookies.set(name, value, value ? (options as object) : { ...options, maxAge: 0 });
-          });
+        set(name: string, value: string, options: Record<string, unknown>) {
+          supabaseResponse.cookies.set(name, value, options as object);
+        },
+        remove(name: string, options: Record<string, unknown>) {
+          supabaseResponse.cookies.set(name, "", { ...options, maxAge: 0 });
         },
       },
     }

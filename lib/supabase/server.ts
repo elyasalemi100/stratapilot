@@ -9,20 +9,21 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() {
-          return cookieStore.getAll();
+        get(name: string) {
+          return cookieStore.get(name)?.value;
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        set(name: string, value: string, options: Record<string, unknown>) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              if (value) {
-                cookieStore.set(name, value, options as Parameters<typeof cookieStore.set>[2]);
-              } else {
-                cookieStore.set(name, "", { ...options, maxAge: 0 } as Parameters<typeof cookieStore.set>[2]);
-              }
-            });
+            cookieStore.set(name, value, options as object);
           } catch {
             // Called from Server Component - cookies are read-only there
+          }
+        },
+        remove(name: string, options: Record<string, unknown>) {
+          try {
+            cookieStore.set(name, "", { ...options, maxAge: 0 });
+          } catch {
+            // Called from Server Component
           }
         },
       },
