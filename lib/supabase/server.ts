@@ -14,11 +14,15 @@ export async function createClient() {
         },
         setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            );
+            cookiesToSet.forEach(({ name, value, options }) => {
+              if (value) {
+                cookieStore.set(name, value, options as Parameters<typeof cookieStore.set>[2]);
+              } else {
+                cookieStore.set(name, "", { ...options, maxAge: 0 } as Parameters<typeof cookieStore.set>[2]);
+              }
+            });
           } catch {
-            // Called from Server Component
+            // Called from Server Component - cookies are read-only there
           }
         },
       },

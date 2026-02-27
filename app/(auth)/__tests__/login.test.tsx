@@ -9,12 +9,8 @@ jest.mock("next/navigation", () => ({
 }));
 
 const mockSignIn = jest.fn();
-jest.mock("@/lib/supabase/client", () => ({
-  createClient: () => ({
-    auth: {
-      signInWithPassword: mockSignIn,
-    },
-  }),
+jest.mock("@/lib/actions/login-actions", () => ({
+  signIn: (...args: unknown[]) => mockSignIn(...args),
 }));
 
 describe("LoginPage", () => {
@@ -39,14 +35,11 @@ describe("LoginPage", () => {
   });
 
   it("submits with email and password", async () => {
-    mockSignIn.mockResolvedValue({ error: null });
+    mockSignIn.mockResolvedValue({ success: true });
     render(<LoginPage />);
     await userEvent.type(screen.getByLabelText(/email/i), "test@example.com");
     await userEvent.type(screen.getByLabelText(/password/i), "password123");
     await userEvent.click(screen.getByRole("button", { name: /sign in/i }));
-    expect(mockSignIn).toHaveBeenCalledWith({
-      email: "test@example.com",
-      password: "password123",
-    });
+    expect(mockSignIn).toHaveBeenCalledWith("test@example.com", "password123");
   });
 });
