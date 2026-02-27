@@ -3,12 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  matchTransactionToInvoice,
-  unmatchTransaction,
-} from "@/lib/actions/banking-actions";
+import { matchTransactionToInvoice } from "@/lib/actions/banking-actions";
 import { formatCurrency, formatDate } from "@/lib/utils";
-import { Link2, Unlink } from "lucide-react";
+import { Link2 } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -134,8 +131,12 @@ export function ReconciliationClient({
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {transactions
-                          .filter((t) => t.transaction_type === "credit" && Math.abs(Number(t.amount) - due) < 0.01)
-                          .slice(0, 3)
+                          .filter(
+                            (t) =>
+                              t.transaction_type === "credit" &&
+                              Math.abs(Number(t.amount) - due) < 0.02
+                          )
+                          .slice(0, 5)
                           .map((txn) => (
                             <Button
                               key={txn.id}
@@ -148,14 +149,6 @@ export function ReconciliationClient({
                               Match {formatCurrency(txn.amount)}
                             </Button>
                           ))}
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMatch(transactions[0]?.id ?? "", inv.id, due)}
-                          disabled={!!matching || transactions.length === 0}
-                        >
-                          {matching?.invId === inv.id ? "Matching..." : "Manual match"}
-                        </Button>
                       </div>
                     </div>
                   );

@@ -26,7 +26,9 @@ export async function createOcFromWizard(data: {
     .single();
 
   if (!profile?.management_company_id) {
-    throw new Error("No management company assigned");
+    throw new Error(
+      "No management company assigned. Please contact your administrator to link your account to a management company."
+    );
   }
 
   const slug = data.plan_number.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");

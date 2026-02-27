@@ -166,19 +166,25 @@ export function OcSetupWizard() {
     try {
       const memberships: Parameters<typeof addPeopleAndMemberships>[1] = [];
       for (const [lotId, owners] of Object.entries(ownersData)) {
-        for (const o of owners) {
-          if (o.full_name.trim()) {
-            memberships.push({
-              lot_id: lotId,
-              full_name: o.full_name,
-              email: o.email || undefined,
-              phone: o.phone || undefined,
-              mailing_address: o.mailing_address || undefined,
-              ownership_share_percent: o.share,
-              is_primary_contact: o.primary,
-              role: "owner",
-            });
-          }
+        const validOwners = owners.filter((o) => o.full_name.trim());
+        const totalShare = validOwners.reduce((s, o) => s + (o.share || 0), 0);
+        for (const o of validOwners) {
+          const share =
+            totalShare > 0
+              ? o.share || 0
+              : validOwners.length === 1
+              ? 100
+              : Math.round(100 / validOwners.length);
+          memberships.push({
+            lot_id: lotId,
+            full_name: o.full_name,
+            email: o.email || undefined,
+            phone: o.phone || undefined,
+            mailing_address: o.mailing_address || undefined,
+            ownership_share_percent: share,
+            is_primary_contact: o.primary,
+            role: "owner",
+          });
         }
       }
       if (memberships.length > 0) {

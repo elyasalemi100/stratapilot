@@ -34,7 +34,7 @@ export async function importBankTransactions(
   if (!account) throw new Error("Bank account not found");
 
   const parseAmount = (row: Record<string, string>): { amount: number; type: "debit" | "credit" } => {
-    if (mapping.amount) {
+    if (mapping.amount && mapping.amount.trim()) {
       const val = parseFloat(String(row[mapping.amount] ?? 0).replace(/[^0-9.-]/g, "")) || 0;
       return { amount: Math.abs(val), type: val >= 0 ? "credit" : "debit" };
     }
